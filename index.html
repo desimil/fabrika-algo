@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Фабрика Алго</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⚙️</div>
+      <div>
+        <div class="title">Фабрика Алго</div>
+        <div class="subtitle">Алгоритмично мислене • 2. клас • без код</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnLevels" class="btn secondary">Нива</button>
+      <button id="btnResetProgress" class="btn ghost" title="Изтрий прогреса">Нулирай прогрес</button>
+    </div>
+  </header>
+
+  <main class="app">
+    <!-- Levels screen -->
+    <section id="screenLevels" class="screen">
+      <div class="card">
+        <h2>Избери ниво</h2>
+        <p class="muted">Нивата се отключват последователно. Звездите се пазят в браузъра.</p>
+        <div id="levelsGrid" class="levels-grid"></div>
+      </div>
+
+      <div class="card">
+        <h3>Как се играе</h3>
+        <ol class="howto">
+          <li>Вземи блок от <b>Палитрата</b> и го пусни в <b>Моята програма</b>.</li>
+          <li>Натисни <b>▶ СТАРТ</b> или <b>👣 СТЪПКА</b>.</li>
+          <li>Гледай как предметите отиват в кутиите A/B/C/X.</li>
+          <li>Клик върху блок в програмата = маха се.</li>
+        </ol>
+        <div class="tip">💡 За „АКО“ пускай вътре само действия като „Сложи в A/B/C/X“ или „Боядисай зелено“.</div>
+      </div>
+    </section>
+
+    <!-- Game screen -->
+    <section id="screenGame" class="screen hidden">
+      <div class="hud card">
+        <div class="hud-left">
+          <div class="lvl-title" id="lvlTitle">Ниво</div>
+          <div class="lvl-goal" id="lvlGoal">Цел</div>
+        </div>
+        <div class="hud-right">
+          <button id="btnBack" class="btn secondary">← Назад</button>
+          <button id="btnRestart" class="btn secondary">↻ Рестарт</button>
+          <button id="btnHint" class="btn ghost">💡 Подсказка</button>
+          <button id="btnStep" class="btn">👣 Стъпка</button>
+          <button id="btnRun" class="btn primary">▶ Старт</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="panel card">
+          <h3>Вход</h3>
+          <div id="inputRow" class="row"></div>
+          <div class="small muted">👉 Маркираният е „следващият“ предмет.</div>
+
+          <div class="status">
+            <div><b>Държа:</b> <span id="heldText">—</span></div>
+            <div><b>Сума:</b> <span id="sumText">0</span></div>
+            <div><b>Превключвател:</b> <span id="toggleText">0</span></div>
+          </div>
+
+          <h3>Кутии</h3>
+          <div class="boxes">
+            <div class="box"><div class="box-head">A</div><div class="box-body" id="boxA"></div></div>
+            <div class="box"><div class="box-head">B</div><div class="box-body" id="boxB"></div></div>
+            <div class="box"><div class="box-head">C</div><div class="box-body" id="boxC"></div></div>
+            <div class="box"><div class="box-head">X</div><div class="box-body" id="boxX"></div></div>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Палитра</h3>
+          <div id="palette" class="palette"></div>
+          <div class="small muted">Drag&drop работи и с докосване на повечето устройства. (Има и клик-алтернатива.)</div>
+
+          <div id="funcFWrap" class="func-wrap hidden">
+            <h3>Супер блок F</h3>
+            <div class="small muted">Пусни тук малка подпрограма (само за ниво 13).</div>
+            <div id="funcFZone" class="dropzone"></div>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Моята програма</h3>
+          <div id="programZone" class="dropzone"></div>
+          <div id="result" class="result muted">Подреди блокове и натисни ▶ СТАРТ.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer muted">
+    Работи като статичен сайт. Качваш папката и играеш в браузър.
+  </footer>
+
+  <script src="levels.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
