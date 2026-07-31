@@ -85,11 +85,19 @@ function renderThemePicker() {
   }
 }
 
+let lastShownXp = null;
 function updateTopbarAvatar() {
   const av = AVATARS.find(a => a.id === progress.avatar) || AVATARS[0];
   $("#topAvatar").textContent = av.emoji;
   $("#topAvatar").className = "top-avatar " + av.id;
-  $("#topXp").textContent = progress.xp + " XP";
+  const xpEl = $("#topXp");
+  xpEl.textContent = progress.xp + " XP";
+  if (lastShownXp !== null && progress.xp > lastShownXp) {
+    xpEl.classList.remove("bump");
+    void xpEl.offsetWidth;
+    xpEl.classList.add("bump");
+  }
+  lastShownXp = progress.xp;
 }
 
 function startIntro() {
