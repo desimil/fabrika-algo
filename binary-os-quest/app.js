@@ -10,10 +10,12 @@ function loadProgress() {
       stars: p.stars ?? {},
       xp: p.xp ?? 0,
       avatar: p.avatar ?? null,
+      theme: p.theme ?? null,
+      storySeen: p.storySeen ?? false,
       badges: p.badges ?? []
     };
   } catch (e) {
-    return { unlocked: 1, stars: {}, xp: 0, avatar: null, badges: [] };
+    return { unlocked: 1, stars: {}, xp: 0, avatar: null, theme: null, storySeen: false, badges: [] };
   }
 }
 function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
@@ -28,6 +30,11 @@ function shuffle(arr) {
 function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
 let progress = loadProgress();
+function getTheme() { return THEMES.find(t => t.id === progress.theme) || null; }
+function appOf() { return getTheme() || { appName: "Дигиталния свят", appDesc: "дигитално приложение", fans: "потребителите", emoji: "💾" }; }
+function applyTheme(str) { return (str || "").replace(/\{app\}/g, appOf().appName); }
+function taunt() { return TAUNTS[Math.floor(Math.random() * TAUNTS.length)]; }
+function cheer() { return CHEERS[Math.floor(Math.random() * CHEERS.length)]; }
 let currentLevel = null;
 let levelState = null; // per-type working state
 let attemptsFailed = 0;
@@ -56,6 +63,28 @@ function renderAvatarPicker(targetSel, onPick) {
   });
 }
 
+function renderThemePicker() {
+  const wrap = $("#themePicker");
+  wrap.innerHTML = "";
+  THEMES.forEach(th => {
+    const b = document.createElement("button");
+    b.className = "theme-btn " + th.id + (progress.theme === th.id ? " selected" : "");
+    b.innerHTML = `<span class="th-emoji">${th.emoji}</span><span class="th-name">${th.name}</span><span class="th-app">${th.appName}</span>`;
+    b.addEventListener("click", () => {
+      progress.theme = th.id;
+      saveProgress();
+      renderThemePicker();
+      updateTopbarAvatar();
+    });
+    wrap.appendChild(b);
+  });
+  const startBtn = $("#btnStartGame");
+  if (startBtn) {
+    startBtn.disabled = !progress.theme;
+    startBtn.textContent = progress.theme ? "🚀 Старт на мисията" : "👆 Първо избери тема";
+  }
+}
+
 function updateTopbarAvatar() {
   const av = AVATARS.find(a => a.id === progress.avatar) || AVATARS[0];
   $("#topAvatar").textContent = av.emoji;
@@ -64,8 +93,26 @@ function updateTopbarAvatar() {
 }
 
 function startIntro() {
+  renderThemePicker();
   renderAvatarPicker("#avatarPicker", null);
   showScreen("screenIntro");
+}
+
+function showStory(html, onContinue) {
+  $("#storyText").innerHTML = html;
+  const btn = $("#btnStoryContinue");
+  const newBtn = btn.cloneNode(true);
+  btn.replaceWith(newBtn);
+  newBtn.addEventListener("click", onContinue);
+  showScreen("screenStory");
+}
+
+function storyForLevelEnd(id) {
+  const app = appOf();
+  if (id === 7) return STORY.worldEnd1(app);
+  if (id === 13) return STORY.worldEnd2(app);
+  if (id === 14) return STORY.finalVictory(app);
+  return null;
 }
 
 function isLevelUnlocked(id) { return id <= progress.unlocked; }
@@ -73,6 +120,9 @@ function isLevelDone(id) { return (progress.stars[id] ?? 0) > 0; }
 
 function renderMap() {
   updateTopbarAvatar();
+  const app = appOf();
+  $("#mapHeading").textContent = `Мисия: спаси ${app.appName} ${app.emoji}`;
+  $("#mapSubtext").textContent = `Ел Глитч разбърка ${app.appDesc} в купчина от нули и единици. Мини през мисиите, събирай XP и значки, и стани DIGITAL HERO.`;
   const root = $("#worldsRoot");
   root.innerHTML = "";
   WORLDS.forEach(world => {
@@ -112,10 +162,14 @@ function typeIcon(t) {
 // ---------------- Level loading ----------------
 function loadLevel(id) {
   currentLevel = deepClone(LEVELS.find(l => l.id === id));
+  const theme = progress.theme;
+  if (currentLevel.id === 4 && theme && MATCH_OVERRIDES[theme]) currentLevel.pairs = deepClone(MATCH_OVERRIDES[theme]);
+  if (currentLevel.id === 6 && theme && QUIZ_OVERRIDES[theme]) currentLevel.questions = deepClone(QUIZ_OVERRIDES[theme]);
   attemptsFailed = 0;
   levelState = {};
   $("#lvlTitle").textContent = currentLevel.title;
   $("#lvlWorld").textContent = WORLDS.find(w => w.id === currentLevel.worldId)?.name || "";
+  $("#lvlMission").innerHTML = currentLevel.mission ? `${STORY.mentor.emoji} <b>${STORY.mentor.name}:</b> ${applyTheme(currentLevel.mission)}` : "";
   $("#lvlIntro").textContent = currentLevel.intro || "";
   $("#lvlFeedback").className = "feedback hidden";
   $("#lvlFeedback").textContent = "";
@@ -208,7 +262,7 @@ function checkQuiz(qWrap, checkBtn) {
     finishLevel(true, correct === total ? 0 : attemptsFailed + 1);
   } else {
     attemptsFailed++;
-    setFeedback(`Резултат: ${correct}/${total}. Трябва поне ${Math.ceil(total * 0.6)}/${total}. Опитай пак!`, "bad");
+    setFeedback(`Резултат: ${correct}/${total}. Трябва поне ${Math.ceil(total * 0.6)}/${total}. Опитай пак! ${taunt()}`, "bad");
     const retry = document.createElement("button");
     retry.className = "btn secondary";
     retry.textContent = "🔁 Опитай пак";
@@ -272,7 +326,7 @@ function renderBinaryTarget(body) {
       }
     } else {
       levelState.fails++;
-      setFeedback(`Сборът е ${sum}, трябва да е ${target}. Опитай пак.`, "bad");
+      setFeedback(`Сборът е ${sum}, трябва да е ${target}. Опитай пак. ${taunt()}`, "bad");
     }
   });
   btnRow.appendChild(checkBtn);
@@ -319,7 +373,7 @@ function renderOrderList(body) {
   checkBtn.addEventListener("click", () => {
     const ok = JSON.stringify(levelState.order) === JSON.stringify(currentLevel.correctOrder);
     if (ok) finishLevel(true, levelState.fails);
-    else { levelState.fails++; setFeedback("Още не е точно. Пробвай пак с ↑ ↓.", "bad"); }
+    else { levelState.fails++; setFeedback("Още не е точно. Пробвай пак с ↑ ↓. " + taunt(), "bad"); }
   });
   btnRow.appendChild(checkBtn);
   body.appendChild(btnRow);
@@ -396,7 +450,7 @@ function renderMatchBoard(body) {
     if (!allFilled) { setFeedback("Първо запълни всички клетки.", "bad"); return; }
     const ok = currentLevel.pairs.every(p => levelState.assign[p.id] === p.id);
     if (ok) finishLevel(true, levelState.fails);
-    else { levelState.fails++; setFeedback("Има грешни двойки. Провери отново.", "bad"); }
+    else { levelState.fails++; setFeedback("Има грешни двойки. Провери отново. " + taunt(), "bad"); }
   });
   btnRow.appendChild(checkBtn);
   body.appendChild(btnRow);
@@ -463,7 +517,7 @@ function renderSort2Board(body) {
     if (!allPlaced) { setFeedback("Първо разпредели всички елементи.", "bad"); return; }
     const ok = currentLevel.items.every(it => levelState.assign[it.id] === it.correctBox);
     if (ok) finishLevel(true, levelState.fails);
-    else { levelState.fails++; setFeedback("Има грешно разпределени елементи.", "bad"); }
+    else { levelState.fails++; setFeedback("Има грешно разпределени елементи. " + taunt(), "bad"); }
   });
   btnRow.appendChild(checkBtn);
   body.appendChild(btnRow);
@@ -490,23 +544,33 @@ function finishLevel(ok, fails) {
     badgeMsg = ` 🎉 Получи значка ${world.badgeEmoji} ${world.badge}!`;
   }
 
-  setFeedback(`✅ Успех! ${"★".repeat(stars)}${"☆".repeat(3 - stars)} (+${stars > prevStars ? xpGain : 0} XP)${badgeMsg}`, "ok");
+  setFeedback(`✅ Успех! ${"★".repeat(stars)}${"☆".repeat(3 - stars)} (+${stars > prevStars ? xpGain : 0} XP)${badgeMsg} ${cheer()}`, "ok");
   updateTopbarAvatar();
 
   const btnRow = document.createElement("div");
   btnRow.className = "action-row";
-  const nextBtn = document.createElement("button");
-  nextBtn.className = "btn primary";
-  nextBtn.textContent = "➡️ Към картата";
-  nextBtn.addEventListener("click", showMap);
-  btnRow.appendChild(nextBtn);
-  const nextLevel = LEVELS.find(l => l.id === currentLevel.id + 1);
-  if (nextLevel && isLevelUnlocked(nextLevel.id)) {
-    const goNext = document.createElement("button");
-    goNext.className = "btn secondary";
-    goNext.textContent = "▶ Следващо ниво";
-    goNext.addEventListener("click", () => loadLevel(nextLevel.id));
-    btnRow.appendChild(goNext);
+
+  const storyHtml = storyForLevelEnd(currentLevel.id);
+  if (storyHtml) {
+    const storyBtn = document.createElement("button");
+    storyBtn.className = "btn primary";
+    storyBtn.textContent = "🎬 Продължи сюжета";
+    storyBtn.addEventListener("click", () => showStory(storyHtml, showMap));
+    btnRow.appendChild(storyBtn);
+  } else {
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn primary";
+    nextBtn.textContent = "➡️ Към картата";
+    nextBtn.addEventListener("click", showMap);
+    btnRow.appendChild(nextBtn);
+    const nextLevel = LEVELS.find(l => l.id === currentLevel.id + 1);
+    if (nextLevel && isLevelUnlocked(nextLevel.id)) {
+      const goNext = document.createElement("button");
+      goNext.className = "btn secondary";
+      goNext.textContent = "▶ Следваща мисия";
+      goNext.addEventListener("click", () => loadLevel(nextLevel.id));
+      btnRow.appendChild(goNext);
+    }
   }
   $("#lvlBody").appendChild(btnRow);
 }
@@ -516,15 +580,24 @@ function showMap() { renderMap(); showScreen("screenMap"); }
 // ---------------- Init ----------------
 function init() {
   updateTopbarAvatar();
-  $("#btnStartGame").addEventListener("click", showMap);
+  $("#btnStartGame").addEventListener("click", () => {
+    if (!progress.theme) { renderThemePicker(); return; } // require a theme first
+    if (!progress.storySeen) {
+      progress.storySeen = true;
+      saveProgress();
+      showStory(STORY.intro(appOf()), showMap);
+    } else {
+      showMap();
+    }
+  });
   $("#btnMap").addEventListener("click", showMap);
   $("#btnChangeAvatar").addEventListener("click", startIntro);
+  $("#btnChangeTheme").addEventListener("click", () => showStory(STORY.intro(appOf()), showMap));
   $("#btnResetProgress").addEventListener("click", () => {
     if (confirm("Да нулирам ли целия прогрес?")) {
-      const av = progress.avatar;
-      progress = { unlocked: 1, stars: {}, xp: 0, avatar: av, badges: [] };
+      progress = { unlocked: 1, stars: {}, xp: 0, avatar: progress.avatar, theme: null, storySeen: false, badges: [] };
       saveProgress();
-      showMap();
+      startIntro();
     }
   });
 
@@ -532,6 +605,10 @@ function init() {
     progress.avatar = AVATARS[0].id;
     saveProgress();
   }
-  showMap();
+  if (!progress.theme) {
+    startIntro();
+  } else {
+    showMap();
+  }
 }
 window.addEventListener("DOMContentLoaded", init);
