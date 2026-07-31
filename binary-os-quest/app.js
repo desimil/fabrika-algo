@@ -171,14 +171,19 @@ function typeIcon(t) {
 function loadLevel(id) {
   currentLevel = deepClone(LEVELS.find(l => l.id === id));
   const theme = progress.theme;
-  if (currentLevel.id === 4 && theme && MATCH_OVERRIDES[theme]) currentLevel.pairs = deepClone(MATCH_OVERRIDES[theme]);
+  if (currentLevel.id === 4 && theme && ASCII_QUIZ_OVERRIDES[theme]) {
+    const ov = ASCII_QUIZ_OVERRIDES[theme];
+    currentLevel.questions = deepClone(ov.questions);
+    currentLevel.mission = ov.mission;
+    currentLevel.intro = ov.intro;
+  }
   if (currentLevel.id === 6 && theme && QUIZ_OVERRIDES[theme]) currentLevel.questions = deepClone(QUIZ_OVERRIDES[theme]);
   attemptsFailed = 0;
   levelState = {};
   $("#lvlTitle").textContent = currentLevel.title;
   $("#lvlWorld").textContent = WORLDS.find(w => w.id === currentLevel.worldId)?.name || "";
   $("#lvlMission").innerHTML = currentLevel.mission ? `${STORY.mentor.emoji} <b>${STORY.mentor.name}:</b> ${applyTheme(currentLevel.mission)}` : "";
-  $("#lvlIntro").textContent = currentLevel.intro || "";
+  $("#lvlIntro").textContent = applyTheme(currentLevel.intro || "");
   $("#lvlFeedback").className = "feedback hidden";
   $("#lvlFeedback").textContent = "";
   const body = $("#lvlBody");
@@ -209,7 +214,7 @@ function renderQuiz(body) {
   currentLevel.questions.forEach((q, qi) => {
     const qEl = document.createElement("div");
     qEl.className = "quiz-q";
-    qEl.innerHTML = `<div class="q-text">${qi + 1}. ${q.q}</div>`;
+    qEl.innerHTML = `<div class="q-text">${qi + 1}. ${applyTheme(q.q)}</div>`;
     const opts = document.createElement("div");
     opts.className = "q-options";
     q.options.forEach((opt, oi) => {
