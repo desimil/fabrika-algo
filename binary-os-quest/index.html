@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Дигитален Куест: Битове, Байтове и ОС</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <button id="topAvatar" class="top-avatar cyan">🤖</button>
+      <div>
+        <div class="title">ДИГИТАЛЕН КУЕСТ</div>
+        <div class="subtitle">Битове • Байтове • Операционни системи</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div id="topXp" class="xp-pill">0 XP</div>
+      <button id="btnMap" class="btn secondary">🗺️ Карта</button>
+      <button id="btnChangeAvatar" class="btn ghost">Аватар</button>
+      <button id="btnResetProgress" class="btn ghost" title="Изтрий прогреса">Нулирай</button>
+    </div>
+  </header>
+
+  <main class="app">
+    <!-- Intro / avatar picker -->
+    <section id="screenIntro" class="screen hidden">
+      <div class="card glow">
+        <h2>Избери своя аватар</h2>
+        <p class="muted">Само за кеф — избери кой ще те представлява в куеста.</p>
+        <div id="avatarPicker" class="avatar-grid"></div>
+        <div class="action-row">
+          <button id="btnStartGame" class="btn primary">🚀 Към картата</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map / levels -->
+    <section id="screenMap" class="screen">
+      <div class="card glow intro-card">
+        <h2>Добре дошъл/дошла в Дигиталния Куест</h2>
+        <p class="muted">Компютрите не разбират български или английски — те "говорят" само с 0 и 1. Мини през два свята, събирай XP и значки, и стани DIGITAL HERO.</p>
+      </div>
+      <div id="worldsRoot"></div>
+    </section>
+
+    <!-- Level / game screen -->
+    <section id="screenLevel" class="screen hidden">
+      <div class="card glow">
+        <div class="lvl-head">
+          <div>
+            <div class="lvl-world" id="lvlWorld"></div>
+            <div class="lvl-title-big" id="lvlTitle"></div>
+          </div>
+          <button id="btnBackMap" class="btn secondary" onclick="showMap()">← Карта</button>
+        </div>
+        <p class="lvl-intro" id="lvlIntro"></p>
+        <div id="lvlBody" class="lvl-body"></div>
+        <div id="lvlFeedback" class="feedback hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer muted">
+    Дигитален Куест — статична уеб игра. 🔢 → 💻
+  </footer>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
