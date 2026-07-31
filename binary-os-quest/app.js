@@ -75,6 +75,7 @@ function renderThemePicker() {
       saveProgress();
       renderThemePicker();
       updateTopbarAvatar();
+      applyThemeVisual();
     });
     wrap.appendChild(b);
   });
@@ -106,7 +107,43 @@ function startIntro() {
   showScreen("screenIntro");
 }
 
-function showStory(html, onContinue) {
+function applyThemeVisual() {
+  const theme = progress.theme;
+  document.documentElement.dataset.theme = theme || "";
+  const vis = THEME_VISUALS[theme];
+  const icons = vis ? vis.bgIcons : ["🟩", "🧱", "🟦", "⭐", "🟪", "💎", "🟨", "✨"];
+  const bg = $(".bg-blocks");
+  if (bg) {
+    bg.innerHTML = icons.map(ic => `<span>${ic}</span>`).join("");
+  }
+}
+
+function renderThemeBanner() {
+  const el = $("#themeBanner");
+  if (!el) return;
+  const theme = progress.theme;
+  const vis = THEME_VISUALS[theme];
+  if (!vis) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="banner-icons">${vis.bannerIcons.map(ic => `<span>${ic}</span>`).join("")}</div>
+    <div class="banner-label">📍 Влизаш в ${vis.place} на ${appOf().appName}</div>
+  `;
+}
+
+function showStory(story, onContinue) {
+  let html = "";
+  if (story.alert) html += `<div class="story-alert">${story.alert}</div>`;
+  story.lines.forEach(line => {
+    const who = line.speaker === "villain" ? STORY.villain : STORY.mentor;
+    html += `
+      <div class="story-bubble ${line.speaker}">
+        <div class="bubble-avatar">${who.emoji}</div>
+        <div class="bubble-content">
+          <div class="bubble-name">${who.name}</div>
+          <div class="bubble-text">${line.text}</div>
+        </div>
+      </div>`;
+  });
   $("#storyText").innerHTML = html;
   const btn = $("#btnStoryContinue");
   const newBtn = btn.cloneNode(true);
@@ -128,6 +165,8 @@ function isLevelDone(id) { return (progress.stars[id] ?? 0) > 0; }
 
 function renderMap() {
   updateTopbarAvatar();
+  applyThemeVisual();
+  renderThemeBanner();
   const app = appOf();
   $("#mapHeading").textContent = `Мисия: спаси ${app.appName} ${app.emoji}`;
   $("#mapSubtext").textContent = `Ел Глитч разбърка ${app.appDesc} в купчина от нули и единици. Мини през мисиите, събирай XP и значки, и стани DIGITAL HERO.`;
@@ -155,13 +194,17 @@ function renderMap() {
       tile.className = "level-tile" + (unlocked ? "" : " locked") + (stars > 0 ? " done" : "");
       tile.innerHTML = `
         <div class="lvl-icon">${typeIcon(lv.type)}</div>
-        <div class="lvl-title">${lv.title}</div>
+        <div class="lvl-title">${levelTitleFor(lv)}</div>
         <div class="lvl-stars">${unlocked ? ("★".repeat(stars) + "☆".repeat(3 - stars)) : "🔒"}</div>
       `;
       tile.addEventListener("click", () => { if (unlocked) loadLevel(lv.id); });
       grid.appendChild(tile);
     });
   });
+}
+function levelTitleFor(lv) {
+  if (lv.id === 2 && progress.theme && THEME_VISUALS[progress.theme]) return THEME_VISUALS[progress.theme].safe.title;
+  return lv.title;
 }
 function typeIcon(t) {
   return { quiz: "❓", binary: "🔀", order: "📶", match: "🔗", sort2: "🗂️" }[t] || "🎮";
@@ -171,6 +214,12 @@ function typeIcon(t) {
 function loadLevel(id) {
   currentLevel = deepClone(LEVELS.find(l => l.id === id));
   const theme = progress.theme;
+  if (currentLevel.id === 2 && theme && THEME_VISUALS[theme]) {
+    const safe = THEME_VISUALS[theme].safe;
+    currentLevel.title = safe.title;
+    currentLevel.mission = safe.mission;
+    currentLevel.intro = safe.intro;
+  }
   if (currentLevel.id === 4 && theme && ASCII_QUIZ_OVERRIDES[theme]) {
     const ov = ASCII_QUIZ_OVERRIDES[theme];
     currentLevel.questions = deepClone(ov.questions);
@@ -295,12 +344,20 @@ function renderBinary(body) {
 function renderBinaryTarget(body) {
   body.innerHTML = "";
   const target = currentLevel.targets[levelState.targetIdx];
+  const frame = document.createElement("div");
+  frame.className = "safe-frame";
+
+  const header = document.createElement("div");
+  header.className = "safe-header";
+  header.innerHTML = `<span>🔒</span> ТАЕН КОД <span>🔒</span>`;
+  frame.appendChild(header);
+
   const info = document.createElement("div");
   info.className = "binary-info";
   info.innerHTML = `<div class="target-num">Целево число: <b>${target}</b></div>
     <div class="progress-dots">${currentLevel.targets.map((_, i) =>
       `<span class="dot ${i < levelState.targetIdx ? "done" : i === levelState.targetIdx ? "active" : ""}"></span>`).join("")}</div>`;
-  body.appendChild(info);
+  frame.appendChild(info);
 
   const switches = document.createElement("div");
   switches.className = "switches";
@@ -314,19 +371,20 @@ function renderBinaryTarget(body) {
     });
     switches.appendChild(sw);
   });
-  body.appendChild(switches);
+  frame.appendChild(switches);
 
   const sum = levelState.bits.reduce((s, b, i) => s + b * BIT_VALUES[i], 0);
   const sumEl = document.createElement("div");
-  sumEl.className = "binary-sum";
-  sumEl.innerHTML = `Сбор: <b>${sum}</b>`;
-  body.appendChild(sumEl);
+  sumEl.className = "led-display";
+  sumEl.innerHTML = `СБОР: <b>${sum}</b>`;
+  frame.appendChild(sumEl);
+  body.appendChild(frame);
 
   const btnRow = document.createElement("div");
   btnRow.className = "action-row";
   const checkBtn = document.createElement("button");
   checkBtn.className = "btn primary";
-  checkBtn.textContent = "✅ Провери";
+  checkBtn.textContent = "🔓 Провери кода";
   checkBtn.addEventListener("click", () => {
     if (sum === target) {
       levelState.targetIdx++;
@@ -334,7 +392,7 @@ function renderBinaryTarget(body) {
       if (levelState.targetIdx >= currentLevel.targets.length) {
         finishLevel(true, levelState.fails);
       } else {
-        setFeedback("✅ Точно! Следващо число.", "ok");
+        setFeedback("🔓 Точно! Следваща ключалка.", "ok");
         renderBinaryTarget(body);
       }
     } else {
@@ -610,6 +668,7 @@ function init() {
     if (confirm("Да нулирам ли целия прогрес?")) {
       progress = { unlocked: 1, stars: {}, xp: 0, avatar: progress.avatar, theme: null, storySeen: false, badges: [] };
       saveProgress();
+      applyThemeVisual();
       startIntro();
     }
   });
@@ -618,6 +677,7 @@ function init() {
     progress.avatar = AVATARS[0].id;
     saveProgress();
   }
+  applyThemeVisual();
   if (!progress.theme) {
     startIntro();
   } else {
