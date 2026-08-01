@@ -279,7 +279,7 @@ const SHAPE_ICON = { shirt: "🎽", sticker: "💿", tag: "🏷️" };
 function renderQuiz(body) {
   levelState.answers = new Array(currentLevel.questions.length).fill(null);
   levelState.checked = false;
-  const shape = currentLevel.optionShape || null;
+  const shape = currentLevel.optionShape || "computer";
   const qWrap = document.createElement("div");
   qWrap.className = "quiz-list";
   currentLevel.questions.forEach((q, qi) => {
@@ -287,15 +287,17 @@ function renderQuiz(body) {
     qEl.className = "quiz-q";
     qEl.innerHTML = `<div class="q-text">${qi + 1}. ${applyTheme(q.q)}</div>`;
     const opts = document.createElement("div");
-    opts.className = "q-options" + (shape ? " q-options-shaped" : "");
+    opts.className = "q-options q-options-shaped shape-grid-" + shape;
     q.options.forEach((opt, oi) => {
       const b = document.createElement("button");
-      if (shape) {
-        b.className = "opt-shape shape-" + shape;
-        b.innerHTML = `<span class="shape-icon">${SHAPE_ICON[shape] || "🏷️"}</span><span class="shape-code">${opt}</span>`;
+      b.className = "opt-shape shape-" + shape;
+      if (shape === "computer") {
+        b.innerHTML = `
+          <div class="win-bar"><span class="win-dot"></span><span class="win-dot"></span><span class="win-dot"></span><span class="win-badge">${OPT_LETTERS[oi] || oi + 1}</span></div>
+          <div class="shape-code">${opt}</div>
+        `;
       } else {
-        b.className = "opt-btn";
-        b.innerHTML = `<span class="opt-badge">${OPT_LETTERS[oi] || oi + 1}</span><span class="opt-text">${opt}</span>`;
+        b.innerHTML = `<span class="shape-icon">${SHAPE_ICON[shape] || "🏷️"}</span><span class="shape-code">${opt}</span>`;
       }
       b.addEventListener("click", () => {
         if (levelState.checked) return;

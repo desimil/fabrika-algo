@@ -448,8 +448,11 @@ h3{ margin:4px 0 10px; }
 .opt-btn.wrong .opt-badge{ background: color-mix(in srgb, var(--danger) 30%, transparent); border-color: var(--danger); }
 .opt-text{ flex:1; line-height:1.3; }
 
-/* ---- Graphical option shapes: t-shirt / sticker / price tag ---- */
-.q-options-shaped{ grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap:16px; padding-top:6px; }
+/* ---- Graphical option shapes: computer box / t-shirt / sticker / price tag ---- */
+.q-options-shaped{ padding-top:6px; }
+.shape-grid-computer{ grid-template-columns: 1fr 1fr; gap:14px; }
+@media (max-width:560px){ .shape-grid-computer{ grid-template-columns: 1fr; } }
+.shape-grid-shirt, .shape-grid-sticker, .shape-grid-tag{ grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap:16px; }
 .opt-shape{
   border:none; cursor:pointer; background:none; padding:0;
   display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -462,6 +465,35 @@ h3{ margin:4px 0 10px; }
   font-family:'Consolas',monospace; font-weight:900; font-size:13px; letter-spacing:.5px;
   color:#1a1a1a; position:relative; z-index:1;
 }
+
+/* Computer terminal window box */
+.shape-computer{
+  align-items:stretch; text-align:left; gap:0;
+  border-radius:10px; overflow:hidden;
+  background:#12121f; border:3px solid var(--stroke);
+  box-shadow: 0 4px 0 rgba(0,0,0,.35);
+  width:100%;
+}
+.shape-computer:hover:not(:disabled){ transform: translateY(-3px); }
+.win-bar{ display:flex; align-items:center; gap:5px; padding:7px 10px; background:#23233a; border-bottom:2px solid rgba(255,255,255,.06); }
+.win-dot{ width:8px; height:8px; border-radius:50%; flex:none; }
+.win-dot:nth-child(1){ background:#ff5f56; }
+.win-dot:nth-child(2){ background:#ffbd2e; }
+.win-dot:nth-child(3){ background:#27c93f; }
+.win-badge{
+  margin-left:auto; font-size:10px; font-weight:900; color: var(--muted);
+  border:1px solid var(--stroke); border-radius:4px; padding:1px 6px;
+}
+.shape-computer .shape-code{
+  padding:12px 12px 14px; color:#3dff6a; font-family:'Consolas',monospace;
+  font-weight:700; font-size:12.5px; line-height:1.5; letter-spacing:0;
+  text-shadow: 0 0 6px rgba(61,255,106,.5);
+}
+.shape-computer.picked{ border-color: var(--cyan); box-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 12px color-mix(in srgb, var(--cyan) 45%, transparent); }
+.shape-computer.correct{ border-color: var(--green); }
+.shape-computer.correct .shape-code{ color:#baffd6; }
+.shape-computer.wrong{ border-color: var(--danger); }
+.shape-computer.wrong .shape-code{ color:#ffb8c6; text-shadow:none; }
 
 .shape-shirt{ position:relative; }
 .shape-shirt::before{
