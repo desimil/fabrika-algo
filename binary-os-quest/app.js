@@ -130,6 +130,11 @@ function renderThemeBanner() {
   `;
 }
 
+function mascotHtml(speaker, size) {
+  const cls = speaker === "villain" ? "mascot-glitch" : "mascot-byte";
+  return `<div class="mascot ${cls} ${size || ""}"><div class="face"><span class="eye"></span><span class="eye"></span></div></div>`;
+}
+
 function showStory(story, onContinue) {
   let html = "";
   if (story.alert) html += `<div class="story-alert">${story.alert}</div>`;
@@ -137,7 +142,7 @@ function showStory(story, onContinue) {
     const who = line.speaker === "villain" ? STORY.villain : STORY.mentor;
     html += `
       <div class="story-bubble ${line.speaker}">
-        <div class="bubble-avatar">${who.emoji}</div>
+        <div class="bubble-avatar">${mascotHtml(line.speaker, "lg")}</div>
         <div class="bubble-content">
           <div class="bubble-name">${who.name}</div>
           <div class="bubble-text">${line.text}</div>
@@ -170,6 +175,15 @@ function renderMap() {
   const app = appOf();
   $("#mapHeading").textContent = `Мисия: спаси ${app.appName} ${app.emoji}`;
   $("#mapSubtext").textContent = `Ел Глитч разбърка ${app.appDesc} в купчина от нули и единици. Мини през мисиите, събирай XP и значки, и стани DIGITAL HERO.`;
+
+  const guide = $("#mapGuide");
+  if (guide) {
+    guide.innerHTML = `
+      ${mascotHtml("mentor", "md")}
+      <div class="guide-bubble">${STORY.mentor.name}: „Готов ли си, агент? Тръгвай по пътеката и освободи ${app.appName}!“</div>
+    `;
+  }
+
   const root = $("#worldsRoot");
   root.innerHTML = "";
   WORLDS.forEach(world => {
@@ -183,22 +197,26 @@ function renderMap() {
         <div class="world-name">${world.name}</div>
         <div class="world-badge ${worldDone ? "earned" : ""}">${world.badgeEmoji} ${world.badge}${worldDone ? " ✓" : ""}</div>
       </div>
-      <div class="level-grid" id="grid-${world.id}"></div>
+      <div class="level-path" id="path-${world.id}"></div>
     `;
     root.appendChild(sec);
-    const grid = $("#grid-" + world.id, sec);
-    lvls.forEach(lv => {
+    const path = $("#path-" + world.id, sec);
+    lvls.forEach((lv, idx) => {
       const unlocked = isLevelUnlocked(lv.id);
       const stars = progress.stars[lv.id] ?? 0;
-      const tile = document.createElement("div");
-      tile.className = "level-tile" + (unlocked ? "" : " locked") + (stars > 0 ? " done" : "");
-      tile.innerHTML = `
-        <div class="lvl-icon">${typeIcon(lv.type)}</div>
-        <div class="lvl-title">${levelTitleFor(lv)}</div>
-        <div class="lvl-stars">${unlocked ? ("★".repeat(stars) + "☆".repeat(3 - stars)) : "🔒"}</div>
+      const done = stars > 0;
+      const side = idx % 2 === 0 ? "side-left" : "side-right";
+      const node = document.createElement("div");
+      node.className = `level-node ${side}` + (unlocked ? "" : " locked") + (done ? " done" : "");
+      node.innerHTML = `
+        <div class="node-circle">${unlocked ? typeIcon(lv.type) : "🔒"}</div>
+        <div class="node-card">
+          <div class="node-title">${levelTitleFor(lv)}</div>
+          <div class="node-stars">${unlocked ? ("★".repeat(stars) + "☆".repeat(3 - stars)) : "заключено"}</div>
+        </div>
       `;
-      tile.addEventListener("click", () => { if (unlocked) loadLevel(lv.id); });
-      grid.appendChild(tile);
+      node.addEventListener("click", () => { if (unlocked) loadLevel(lv.id); });
+      path.appendChild(node);
     });
   });
 }
