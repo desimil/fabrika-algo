@@ -36,10 +36,9 @@ body{
   font-family: var(--font-body);
   color:var(--text);
   background:
-    linear-gradient(color-mix(in srgb, var(--cyan) 8%, transparent) 2px, transparent 2px) 0 0/40px 40px,
-    linear-gradient(90deg, color-mix(in srgb, var(--cyan) 8%, transparent) 2px, transparent 2px) 0 0/40px 40px,
-    radial-gradient(1100px 750px at 15% -5%, color-mix(in srgb, var(--pink) 24%, transparent), transparent 55%),
-    radial-gradient(1000px 700px at 100% 10%, color-mix(in srgb, var(--cyan) 22%, transparent), transparent 55%),
+    radial-gradient(1100px 750px at 15% -5%, color-mix(in srgb, var(--pink) 16%, transparent), transparent 55%),
+    radial-gradient(1000px 700px at 100% 10%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 55%),
+    conic-gradient(from 90deg, #13132c 90deg, #0b0b1c 90deg 180deg, #13132c 180deg 270deg, #0b0b1c 270deg) 0 0/48px 48px,
     var(--bg);
   min-height:100%;
   position:relative;
@@ -242,50 +241,14 @@ h3{ margin:4px 0 10px; }
 .theme-btn.music.selected{ border-color:#c724ff; box-shadow: 0 4px 0 rgba(0,0,0,.3), 0 0 18px rgba(199,36,255,.5); background: linear-gradient(180deg, rgba(199,36,255,.2), rgba(199,36,255,.04)); }
 .theme-btn.fashion.selected{ border-color:#ff6fb0; box-shadow: 0 4px 0 rgba(0,0,0,.3), 0 0 18px rgba(255,111,176,.5); background: linear-gradient(180deg, rgba(255,111,176,.2), rgba(255,111,176,.04)); }
 
-/* ---- Characters: Байта (mentor) and Ел Глитч (villain) ---- */
-.mascot{ position:relative; width:52px; height:52px; flex:none; }
-.mascot.md{ width:64px; height:64px; }
-.mascot.lg{ width:86px; height:86px; }
-.mascot .face{ position:relative; z-index:2; width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:8%; }
-.mascot .eye{ background:#fff; }
-
-.mascot-byte{
-  border-radius:50%;
-  background: radial-gradient(circle at 35% 30%, #eef2ff, #aab6e8 55%, #6a78b8 100%);
-  border:3px solid rgba(255,255,255,.5);
-  box-shadow: 0 4px 0 rgba(0,0,0,.3), inset 0 -8px 12px rgba(0,0,0,.15);
+/* ---- Characters: pure-CSS pixel-art sprites (Байта / Ел Глитч) ---- */
+.pixel-art{ display:block; image-rendering:pixelated; position:relative; }
+.mascot-wrap{
+  display:inline-block; flex:none;
+  filter: drop-shadow(0 4px 0 rgba(0,0,0,.35));
+  animation: spriteBob 2.6s ease-in-out infinite;
 }
-.mascot-byte::before{
-  content:""; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
-  width:3px; height:11px; background:#8894c9; z-index:1;
-}
-.mascot-byte::after{
-  content:""; position:absolute; top:-16px; left:50%; transform:translateX(-50%);
-  width:7px; height:7px; border-radius:50%; background: var(--cyan); box-shadow:0 0 8px var(--cyan); z-index:1;
-  animation: antennaBlink 2s ease-in-out infinite;
-}
-@keyframes antennaBlink{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
-.mascot-byte .face{
-  width:62%; height:46%; background:#0a1626; border-radius:8px;
-  box-shadow: inset 0 0 6px color-mix(in srgb, var(--cyan) 60%, transparent);
-}
-.mascot-byte .eye{ width:16%; height:16%; border-radius:50%; background: var(--cyan); box-shadow:0 0 6px var(--cyan); animation: eyeBlink 3.4s infinite; }
-@keyframes eyeBlink{ 0%,92%,100%{ transform:scaleY(1); } 96%{ transform:scaleY(.15); } }
-
-.mascot-glitch{
-  clip-path: polygon(50% 2%, 68% 14%, 88% 10%, 82% 30%, 100% 38%, 84% 52%, 94% 72%, 72% 66%, 66% 92%, 50% 74%, 34% 92%, 28% 66%, 6% 72%, 16% 52%, 0% 38%, 18% 30%, 12% 10%, 32% 14%);
-  background: linear-gradient(160deg, var(--pink), var(--pink-dk));
-  filter: drop-shadow(0 4px 4px rgba(0,0,0,.4));
-}
-.mascot-glitch::before, .mascot-glitch::after{
-  content:""; position:absolute; inset:0; clip-path:inherit; mix-blend-mode:screen; opacity:.65; z-index:1;
-}
-.mascot-glitch::before{ background:#00eaff; animation: glitchShift 2.2s infinite steps(2); }
-.mascot-glitch::after{ background:#ff2b2b; animation: glitchShift2 2.6s infinite steps(2); }
-@keyframes glitchShift{ 0%,100%{ transform:translate(-3px,1px); } 50%{ transform:translate(3px,-2px); } }
-@keyframes glitchShift2{ 0%,100%{ transform:translate(3px,-1px); } 50%{ transform:translate(-2px,2px); } }
-.mascot-glitch .face{ gap:16%; }
-.mascot-glitch .eye{ width:20%; height:10%; transform:skewX(-15deg); border-radius:1px; background:#fff; box-shadow:0 0 4px #fff; }
+@keyframes spriteBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
 
 /* ---- Map guide: mentor character welcoming the player ---- */
 .map-guide{
@@ -421,7 +384,13 @@ h3{ margin:4px 0 10px; }
 
 /* Quiz */
 .quiz-list{ display:grid; gap:14px; }
-.quiz-q{ border:3px solid var(--stroke); border-radius:14px; padding:14px; background: rgba(255,255,255,.02); }
+.quiz-q{
+  border:3px solid var(--stroke); border-radius:14px; padding:14px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 24px, transparent 24px 48px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 48px, transparent 48px 96px),
+    #15152c;
+}
 .q-text{ font-weight:800; margin-bottom:10px; }
 .q-options{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
 @media (max-width:520px){ .q-options{ grid-template-columns: 1fr; } }
@@ -458,7 +427,11 @@ h3{ margin:4px 0 10px; }
   display:flex; flex-direction:column; align-items:center; gap:6px;
   transition: transform .12s ease;
 }
-.opt-shape:hover:not(:disabled){ transform: translateY(-4px) scale(1.03); }
+.q-options-shaped .opt-shape:nth-child(4n+1){ transform: rotate(-3.2deg) translateY(2px); }
+.q-options-shaped .opt-shape:nth-child(4n+2){ transform: rotate(2.6deg) translateY(-3px); }
+.q-options-shaped .opt-shape:nth-child(4n+3){ transform: rotate(2.2deg) translateY(4px); }
+.q-options-shaped .opt-shape:nth-child(4n+4){ transform: rotate(-3.6deg) translateY(-2px); }
+.opt-shape:hover:not(:disabled){ transform: translateY(-6px) scale(1.06) rotate(0deg) !important; }
 .opt-shape:disabled{ cursor:default; }
 .shape-icon{ font-size:18px; position:relative; z-index:1; }
 .shape-code{
@@ -587,13 +560,31 @@ h3{ margin:4px 0 10px; }
 .sw-val{ font-size:12px; }
 .binary-sum{ text-align:center; font-size:17px; font-family:'Consolas',monospace; font-weight:900; }
 
+/* ---- Drag & drop (used by order / match / sort2) ---- */
+.draggable{ touch-action:none; cursor:grab; }
+.draggable:active{ cursor:grabbing; }
+.dragging{ opacity:.85; box-shadow: 0 14px 28px rgba(0,0,0,.5) !important; transform: scale(1.04) rotate(-2deg); }
+.drop-zone{ transition: background .12s ease, border-color .12s ease, transform .12s ease; }
+.drop-zone.drag-over{
+  border-color: var(--cyan) !important;
+  background: color-mix(in srgb, var(--cyan) 20%, transparent) !important;
+  transform: scale(1.03);
+}
+.drag-handle{
+  flex:none; width:26px; height:26px; border-radius:6px;
+  display:grid; place-items:center; font-size:16px; color: var(--muted);
+  background: rgba(255,255,255,.06); border:2px solid var(--stroke);
+  cursor:grab;
+}
+.drag-handle:active{ cursor:grabbing; }
+
 /* Order */
 .order-list{ display:grid; gap:8px; }
 .order-row{
-  display:flex; align-items:center; gap:12px; padding:11px 14px;
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
   border:3px solid var(--stroke); border-radius:12px; background: rgba(255,255,255,.03);
 }
-.order-pos{ width:26px; text-align:center; font-weight:900; color: var(--cyan); }
+.order-pos{ width:22px; text-align:center; font-weight:900; color: var(--cyan); }
 .order-label{ flex:1; font-weight:700; font-size:13px; }
 .order-arrows{ display:flex; gap:6px; }
 .arrow-btn{
@@ -617,7 +608,7 @@ h3{ margin:4px 0 10px; }
 .slot-left{ font-size:13px; color: var(--muted); font-family:'Consolas',monospace; font-weight:700; }
 .slot-right{ font-weight:800; margin-top:4px; }
 .match-token{
-  padding:11px 14px; border-radius:12px; cursor:pointer; font-weight:800;
+  padding:11px 14px; border-radius:12px; cursor:grab; font-weight:800;
   border:3px solid var(--stroke); background: rgba(255,255,255,.04);
   box-shadow: 0 3px 0 rgba(0,0,0,.25);
 }
@@ -628,7 +619,7 @@ h3{ margin:4px 0 10px; }
 /* Sort2 */
 .sort2-pool{ display:flex; flex-wrap:wrap; gap:8px; min-height:48px; }
 .sort2-chip{
-  padding:9px 14px; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer;
+  padding:9px 14px; border-radius:999px; font-weight:800; font-size:13px; cursor:grab;
   border:3px solid var(--stroke); background: rgba(255,255,255,.05);
   box-shadow: 0 3px 0 rgba(0,0,0,.25);
 }
