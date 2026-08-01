@@ -29,6 +29,100 @@ function shuffle(arr) {
 }
 function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
+// ---------------- Generic pointer-based drag & drop (mouse + touch) ----------------
+function enableDrag(handle, moveEl, onDrop) {
+  handle.classList.add("draggable");
+  handle.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const startX = e.clientX, startY = e.clientY;
+    let dragging = false, offX = 0, offY = 0;
+    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+    function move(ev) {
+      if (!dragging) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
+        dragging = true;
+        const rect = moveEl.getBoundingClientRect();
+        offX = startX - rect.left; offY = startY - rect.top;
+        moveEl.classList.add("dragging");
+        moveEl.style.position = "fixed";
+        moveEl.style.left = rect.left + "px";
+        moveEl.style.top = rect.top + "px";
+        moveEl.style.width = rect.width + "px";
+        moveEl.style.zIndex = 1000;
+        moveEl.style.pointerEvents = "none";
+      }
+      moveEl.style.left = (ev.clientX - offX) + "px";
+      moveEl.style.top = (ev.clientY - offY) + "px";
+      $$(".drop-zone.drag-over").forEach(z => z.classList.remove("drag-over"));
+      const target = document.elementFromPoint(ev.clientX, ev.clientY);
+      const zone = target && target.closest(".drop-zone");
+      if (zone) zone.classList.add("drag-over");
+    }
+    function finish(ev) {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", finish);
+      if (!dragging) return;
+      $$(".drop-zone.drag-over").forEach(z => z.classList.remove("drag-over"));
+      const target = document.elementFromPoint(ev.clientX, ev.clientY);
+      const zone = target && target.closest(".drop-zone");
+      moveEl.remove();
+      onDrop(zone);
+    }
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", finish, { once: true });
+  });
+}
+
+// ---------------- Pixel-art sprites (pure CSS, no image files) ----------------
+function pixelArt(pattern, colors, px) {
+  const shadows = [];
+  pattern.forEach((row, y) => {
+    Array.from(row).forEach((ch, x) => {
+      const c = colors[ch];
+      if (c) shadows.push(`${x * px}px ${y * px}px 0 ${c}`);
+    });
+  });
+  const w = Math.max(...pattern.map(r => r.length)) * px;
+  const h = pattern.length * px;
+  return `<i class="pixel-art" style="width:${px}px;height:${px}px;box-shadow:${shadows.join(",")};margin:0 ${w - px}px ${h - px}px 0;"></i>`;
+}
+
+const BYTE_SPRITE = [
+  "....AA....",
+  "....AA....",
+  "..DDDDDD..",
+  ".DBBBBBBD.",
+  "DBBBBBBBBD",
+  "DBBEEEEBBD",
+  "DBBEEEEBBD",
+  "DBBBBBBBBD",
+  "DBSBBBBSBD",
+  "DBSBBBBSBD",
+  ".DDDDDDDD.",
+  "..DD..DD.."
+];
+const GLITCH_SPRITE = [
+  "...D......D.",
+  "..DPD....DPD",
+  ".DPPPDDPPPD.",
+  "DPPPPPPPPPPD",
+  "DPPEEPPEEPPD",
+  "DPPEEPPEEPPD",
+  "DPPPPPPPPPPD",
+  ".DPPPPPPPPD.",
+  ".DPDPPPPDPD.",
+  "..D.DPPD.D..",
+  ".....DD.....",
+  "............"
+];
+
+function spriteHtml(kind, px) {
+  if (kind === "villain") {
+    return pixelArt(GLITCH_SPRITE, { D: "#4a0a2e", P: "var(--pink)", E: "#ffffff" }, px);
+  }
+  return pixelArt(BYTE_SPRITE, { A: "var(--cyan)", D: "#12122a", B: "#e9edff", S: "#a9b3d8", E: "var(--cyan)" }, px);
+}
+
 let progress = loadProgress();
 function getTheme() { return THEMES.find(t => t.id === progress.theme) || null; }
 function appOf() { return getTheme() || { appName: "Дигиталния свят", appDesc: "дигитално приложение", fans: "потребителите", emoji: "💾" }; }
@@ -130,6 +224,10 @@ function renderThemeBanner() {
   `;
 }
 
+function mascotHtml(speaker, px) {
+  return `<div class="mascot-wrap">${spriteHtml(speaker === "villain" ? "villain" : "mentor", px || 6)}</div>`;
+}
+
 function showStory(story, onContinue) {
   let html = "";
   if (story.alert) html += `<div class="story-alert">${story.alert}</div>`;
@@ -137,7 +235,7 @@ function showStory(story, onContinue) {
     const who = line.speaker === "villain" ? STORY.villain : STORY.mentor;
     html += `
       <div class="story-bubble ${line.speaker}">
-        <div class="bubble-avatar">${who.emoji}</div>
+        <div class="bubble-avatar">${mascotHtml(line.speaker, 7)}</div>
         <div class="bubble-content">
           <div class="bubble-name">${who.name}</div>
           <div class="bubble-text">${line.text}</div>
@@ -170,6 +268,15 @@ function renderMap() {
   const app = appOf();
   $("#mapHeading").textContent = `Мисия: спаси ${app.appName} ${app.emoji}`;
   $("#mapSubtext").textContent = `Ел Глитч разбърка ${app.appDesc} в купчина от нули и единици. Мини през мисиите, събирай XP и значки, и стани DIGITAL HERO.`;
+
+  const guide = $("#mapGuide");
+  if (guide) {
+    guide.innerHTML = `
+      ${mascotHtml("mentor", 5)}
+      <div class="guide-bubble">${STORY.mentor.name}: „Готов ли си, агент? Тръгвай по пътеката и освободи ${app.appName}!“</div>
+    `;
+  }
+
   const root = $("#worldsRoot");
   root.innerHTML = "";
   WORLDS.forEach(world => {
@@ -183,22 +290,26 @@ function renderMap() {
         <div class="world-name">${world.name}</div>
         <div class="world-badge ${worldDone ? "earned" : ""}">${world.badgeEmoji} ${world.badge}${worldDone ? " ✓" : ""}</div>
       </div>
-      <div class="level-grid" id="grid-${world.id}"></div>
+      <div class="level-path" id="path-${world.id}"></div>
     `;
     root.appendChild(sec);
-    const grid = $("#grid-" + world.id, sec);
-    lvls.forEach(lv => {
+    const path = $("#path-" + world.id, sec);
+    lvls.forEach((lv, idx) => {
       const unlocked = isLevelUnlocked(lv.id);
       const stars = progress.stars[lv.id] ?? 0;
-      const tile = document.createElement("div");
-      tile.className = "level-tile" + (unlocked ? "" : " locked") + (stars > 0 ? " done" : "");
-      tile.innerHTML = `
-        <div class="lvl-icon">${typeIcon(lv.type)}</div>
-        <div class="lvl-title">${levelTitleFor(lv)}</div>
-        <div class="lvl-stars">${unlocked ? ("★".repeat(stars) + "☆".repeat(3 - stars)) : "🔒"}</div>
+      const done = stars > 0;
+      const side = idx % 2 === 0 ? "side-left" : "side-right";
+      const node = document.createElement("div");
+      node.className = `level-node ${side}` + (unlocked ? "" : " locked") + (done ? " done" : "");
+      node.innerHTML = `
+        <div class="node-circle">${unlocked ? typeIcon(lv.type) : "🔒"}</div>
+        <div class="node-card">
+          <div class="node-title">${levelTitleFor(lv)}</div>
+          <div class="node-stars">${unlocked ? ("★".repeat(stars) + "☆".repeat(3 - stars)) : "заключено"}</div>
+        </div>
       `;
-      tile.addEventListener("click", () => { if (unlocked) loadLevel(lv.id); });
-      grid.appendChild(tile);
+      node.addEventListener("click", () => { if (unlocked) loadLevel(lv.id); });
+      path.appendChild(node);
     });
   });
 }
@@ -225,6 +336,7 @@ function loadLevel(id) {
     currentLevel.questions = deepClone(ov.questions);
     currentLevel.mission = ov.mission;
     currentLevel.intro = ov.intro;
+    currentLevel.optionShape = ov.optionShape;
   }
   if (currentLevel.id === 6 && theme && QUIZ_OVERRIDES[theme]) currentLevel.questions = deepClone(QUIZ_OVERRIDES[theme]);
   attemptsFailed = 0;
@@ -255,9 +367,12 @@ function setFeedback(text, mode) {
 }
 
 // ---------------- QUIZ ----------------
+const OPT_LETTERS = ["А", "Б", "В", "Г", "Д", "Е"];
+const SHAPE_ICON = { shirt: "🎽", sticker: "💿", tag: "🏷️" };
 function renderQuiz(body) {
   levelState.answers = new Array(currentLevel.questions.length).fill(null);
   levelState.checked = false;
+  const shape = currentLevel.optionShape || "computer";
   const qWrap = document.createElement("div");
   qWrap.className = "quiz-list";
   currentLevel.questions.forEach((q, qi) => {
@@ -265,11 +380,18 @@ function renderQuiz(body) {
     qEl.className = "quiz-q";
     qEl.innerHTML = `<div class="q-text">${qi + 1}. ${applyTheme(q.q)}</div>`;
     const opts = document.createElement("div");
-    opts.className = "q-options";
+    opts.className = "q-options q-options-shaped shape-grid-" + shape;
     q.options.forEach((opt, oi) => {
       const b = document.createElement("button");
-      b.className = "opt-btn";
-      b.textContent = opt;
+      b.className = "opt-shape shape-" + shape;
+      if (shape === "computer") {
+        b.innerHTML = `
+          <div class="win-bar"><span class="win-dot"></span><span class="win-dot"></span><span class="win-dot"></span><span class="win-badge">${OPT_LETTERS[oi] || oi + 1}</span></div>
+          <div class="shape-code">${opt}</div>
+        `;
+      } else {
+        b.innerHTML = `<span class="shape-icon">${SHAPE_ICON[shape] || "🏷️"}</span><span class="shape-code">${opt}</span>`;
+      }
       b.addEventListener("click", () => {
         if (levelState.checked) return;
         levelState.answers[qi] = oi;
@@ -364,7 +486,7 @@ function renderBinaryTarget(body) {
   BIT_VALUES.forEach((val, i) => {
     const sw = document.createElement("button");
     sw.className = "switch-btn" + (levelState.bits[i] ? " on" : "");
-    sw.innerHTML = `<div class="sw-val">${val}</div><div class="sw-state">${levelState.bits[i]}</div>`;
+    sw.innerHTML = `<div class="sw-lock">${levelState.bits[i] ? "🔓" : "🔒"}</div><div class="sw-val">${val}</div>`;
     sw.addEventListener("click", () => {
       levelState.bits[i] = levelState.bits[i] ? 0 : 1;
       renderBinaryTarget(body);
@@ -412,13 +534,20 @@ function renderOrder(body) {
 }
 function renderOrderList(body) {
   body.innerHTML = "";
+  const hint = document.createElement("div");
+  hint.className = "small muted";
+  hint.textContent = "🖐️ Хвани блока за дръжката ⠿ и го провлачи на правилното място (или ползвай ↑ ↓).";
+  body.appendChild(hint);
+
   const list = document.createElement("div");
   list.className = "order-list";
   levelState.order.forEach((id, idx) => {
     const item = currentLevel.items.find(i => i.id === id);
     const row = document.createElement("div");
-    row.className = "order-row";
+    row.className = "order-row drop-zone";
+    row.dataset.rowId = id;
     row.innerHTML = `
+      <div class="drag-handle">⠿</div>
       <div class="order-pos">${idx + 1}</div>
       <div class="order-label">${item.label}</div>
       <div class="order-arrows">
@@ -431,6 +560,15 @@ function renderOrderList(body) {
     });
     row.querySelector('[data-dir="down"]').addEventListener("click", () => {
       if (idx < levelState.order.length - 1) { [levelState.order[idx + 1], levelState.order[idx]] = [levelState.order[idx], levelState.order[idx + 1]]; renderOrderList(body); }
+    });
+    enableDrag(row.querySelector(".drag-handle"), row, (zone) => {
+      if (zone) {
+        const fromIdx = levelState.order.indexOf(id);
+        const toIdx = levelState.order.indexOf(zone.dataset.rowId);
+        levelState.order.splice(fromIdx, 1);
+        levelState.order.splice(toIdx, 0, id);
+      }
+      renderOrderList(body);
     });
     list.appendChild(row);
   });
@@ -468,7 +606,8 @@ function renderMatchBoard(body) {
   currentLevel.pairs.forEach(p => {
     const slot = document.createElement("div");
     const assignedId = levelState.assign[p.id];
-    slot.className = "match-slot" + (assignedId ? " filled" : "");
+    slot.className = "match-slot drop-zone" + (assignedId ? " filled" : "");
+    slot.dataset.leftId = p.id;
     const assignedPair = assignedId ? currentLevel.pairs.find(pp => pp.id === assignedId) : null;
     slot.innerHTML = `<div class="slot-left">${p.left}</div><div class="slot-right">${assignedPair ? assignedPair.right : "— провлачи тук —"}</div>`;
     slot.addEventListener("click", () => {
@@ -498,6 +637,11 @@ function renderMatchBoard(body) {
         levelState.selectedRight = levelState.selectedRight === id ? null : id;
         renderMatchBoard(body);
       });
+      enableDrag(tok, tok, (zone) => {
+        if (zone) levelState.assign[zone.dataset.leftId] = id;
+        levelState.selectedRight = null;
+        renderMatchBoard(body);
+      });
     }
     rightCol.appendChild(tok);
   });
@@ -508,7 +652,7 @@ function renderMatchBoard(body) {
 
   const hint = document.createElement("div");
   hint.className = "small muted";
-  hint.textContent = "Кликни жетон вдясно, после кликни клетката отляво, за да го поставиш.";
+  hint.textContent = "🖐️ Провлачи жетон вдясно върху правилната клетка отляво (или кликни жетон, после клетка).";
   body.appendChild(hint);
 
   const btnRow = document.createElement("div");
@@ -549,6 +693,11 @@ function renderSort2Board(body) {
       levelState.selectedItem = levelState.selectedItem === id ? null : id;
       renderSort2Board(body);
     });
+    enableDrag(chip, chip, (zone) => {
+      if (zone) levelState.assign[id] = zone.dataset.boxId;
+      levelState.selectedItem = null;
+      renderSort2Board(body);
+    });
     pool.appendChild(chip);
   });
   body.appendChild(pool);
@@ -557,7 +706,8 @@ function renderSort2Board(body) {
   boxesWrap.className = "sort2-boxes";
   currentLevel.boxes.forEach(box => {
     const boxEl = document.createElement("div");
-    boxEl.className = "sort2-box";
+    boxEl.className = "sort2-box drop-zone";
+    boxEl.dataset.boxId = box.id;
     const chipsHtml = currentLevel.items
       .filter(it => levelState.assign[it.id] === box.id)
       .map(it => `<div class="sort2-chip placed">${it.label}</div>`).join("");
@@ -575,7 +725,7 @@ function renderSort2Board(body) {
 
   const hint = document.createElement("div");
   hint.className = "small muted";
-  hint.textContent = "Кликни елемент отгоре, после кликни кутията, в която да го сложиш.";
+  hint.textContent = "🖐️ Провлачи елемент в правилната кутия (или кликни елемент, после кутия).";
   body.appendChild(hint);
 
   const btnRow = document.createElement("div");
