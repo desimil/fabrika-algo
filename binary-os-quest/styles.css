@@ -324,9 +324,11 @@ h3{ margin:4px 0 10px; }
 .quiz-list{ display:grid; gap:14px; }
 .quiz-q{ border:3px solid var(--stroke); border-radius:14px; padding:14px; background: rgba(255,255,255,.02); }
 .q-text{ font-weight:800; margin-bottom:10px; }
-.q-options{ display:grid; gap:8px; }
+.q-options{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+@media (max-width:520px){ .q-options{ grid-template-columns: 1fr; } }
 .opt-btn{
-  text-align:left; padding:11px 14px; border-radius:12px; cursor:pointer;
+  display:flex; align-items:center; gap:10px;
+  text-align:left; padding:10px 12px; border-radius:12px; cursor:pointer;
   border:3px solid var(--stroke); background: rgba(255,255,255,.03); color:var(--text); font-size:13px;
   font-family: var(--font-body); font-weight:600;
   box-shadow: 0 3px 0 rgba(0,0,0,.25);
@@ -337,6 +339,73 @@ h3{ margin:4px 0 10px; }
 .opt-btn.correct{ border-color: var(--green); background: rgba(61,255,162,.16); }
 .opt-btn.wrong{ border-color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); }
 .opt-btn:disabled{ cursor:default; }
+.opt-badge{
+  flex:none; width:28px; height:28px; border-radius:50%;
+  display:grid; place-items:center; font-weight:900; font-size:13px;
+  background: color-mix(in srgb, var(--cyan) 30%, transparent);
+  border:2px solid color-mix(in srgb, var(--cyan) 55%, transparent);
+}
+.opt-btn.correct .opt-badge{ background: rgba(61,255,162,.3); border-color: var(--green); }
+.opt-btn.wrong .opt-badge{ background: color-mix(in srgb, var(--danger) 30%, transparent); border-color: var(--danger); }
+.opt-text{ flex:1; line-height:1.3; }
+
+/* ---- Graphical option shapes: t-shirt / sticker / price tag ---- */
+.q-options-shaped{ grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap:16px; padding-top:6px; }
+.opt-shape{
+  border:none; cursor:pointer; background:none; padding:0;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  transition: transform .12s ease;
+}
+.opt-shape:hover:not(:disabled){ transform: translateY(-4px) scale(1.03); }
+.opt-shape:disabled{ cursor:default; }
+.shape-icon{ font-size:18px; position:relative; z-index:1; }
+.shape-code{
+  font-family:'Consolas',monospace; font-weight:900; font-size:13px; letter-spacing:.5px;
+  color:#1a1a1a; position:relative; z-index:1;
+}
+
+.shape-shirt{ position:relative; }
+.shape-shirt::before{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cyan) 85%, white), var(--cyan-dk));
+  clip-path: polygon(22% 0%, 38% 0%, 50% 9%, 62% 0%, 78% 0%, 100% 22%, 84% 38%, 76% 30%, 76% 100%, 24% 100%, 24% 30%, 16% 38%, 0% 22%);
+}
+.shape-shirt{ min-height:110px; justify-content:center; padding:26px 10px 14px; border-radius:10px; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+.shape-shirt.picked{ outline:3px solid var(--cyan); outline-offset:2px; border-radius:10px; }
+.shape-shirt.correct{ outline:3px solid var(--green); outline-offset:2px; border-radius:10px; }
+.shape-shirt.wrong{ outline:3px solid var(--danger); outline-offset:2px; border-radius:10px; }
+
+.shape-sticker{ min-height:110px; justify-content:center; }
+.shape-sticker::before{ content:none; }
+.shape-sticker .shape-icon{ display:none; }
+.shape-sticker{
+  border-radius:50%; width:100px; height:100px; margin:0 auto; padding:0;
+  background:
+    radial-gradient(circle at 50% 50%, #191932 0 14%, transparent 15%),
+    conic-gradient(from 0deg, color-mix(in srgb, var(--cyan) 80%, black) 0 8%, color-mix(in srgb, var(--cyan) 95%, white) 0 16%, color-mix(in srgb, var(--cyan) 80%, black) 0 24%, color-mix(in srgb, var(--cyan) 95%, white) 0 32%, color-mix(in srgb, var(--cyan) 80%, black) 0 40%, color-mix(in srgb, var(--cyan) 95%, white) 0 48%, color-mix(in srgb, var(--cyan) 80%, black) 0 56%, color-mix(in srgb, var(--cyan) 95%, white) 0 64%, color-mix(in srgb, var(--cyan) 80%, black) 0 72%, color-mix(in srgb, var(--cyan) 95%, white) 0 80%, color-mix(in srgb, var(--cyan) 80%, black) 0 88%, color-mix(in srgb, var(--cyan) 95%, white) 0 100%);
+  box-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 0 4px #14142a;
+}
+.shape-sticker .shape-code{ background: rgba(10,10,20,.75); padding:3px 8px; border-radius:8px; color:#fff; }
+.shape-sticker.picked{ box-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 0 4px var(--cyan); }
+.shape-sticker.correct{ box-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 0 4px var(--green); }
+.shape-sticker.wrong{ box-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 0 4px var(--danger); }
+
+.shape-tag{ position:relative; min-height:90px; justify-content:center; padding:14px 10px 14px 20px; }
+.shape-tag::before{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cyan) 85%, white), var(--cyan-dk));
+  clip-path: polygon(14% 0%, 100% 0%, 100% 100%, 14% 100%, 0% 50%);
+  border-radius:6px;
+}
+.shape-tag::after{
+  content:""; position:absolute; left:16px; top:50%; transform:translateY(-50%); z-index:1;
+  width:10px; height:10px; border-radius:50%; background:#191932;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.5);
+}
+.shape-tag .shape-code{ margin-left:8px; }
+.shape-tag.picked{ outline:3px solid var(--cyan); outline-offset:2px; border-radius:6px; }
+.shape-tag.correct{ outline:3px solid var(--green); outline-offset:2px; border-radius:6px; }
+.shape-tag.wrong{ outline:3px solid var(--danger); outline-offset:2px; border-radius:6px; }
 .q-explain{ margin-top:10px; font-size:12px; color: var(--muted); font-weight:600; }
 
 /* ---- Safe / combination-lock frame (binary builder) ---- */
@@ -383,8 +452,8 @@ h3{ margin:4px 0 10px; }
 .switch-btn:hover{ transform: translateY(-2px); }
 .switch-btn:active{ transform: translateY(2px); }
 .switch-btn.on{ border-color: var(--cyan); background: color-mix(in srgb, var(--cyan) 22%, transparent); color: var(--cyan); box-shadow: 0 4px 0 rgba(0,0,0,.4), 0 0 14px color-mix(in srgb, var(--cyan) 45%, transparent); }
+.sw-lock{ font-size:24px; line-height:1; }
 .sw-val{ font-size:12px; }
-.sw-state{ font-size:22px; }
 .binary-sum{ text-align:center; font-size:17px; font-family:'Consolas',monospace; font-weight:900; }
 
 /* Order */

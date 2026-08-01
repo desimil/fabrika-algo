@@ -225,6 +225,7 @@ function loadLevel(id) {
     currentLevel.questions = deepClone(ov.questions);
     currentLevel.mission = ov.mission;
     currentLevel.intro = ov.intro;
+    currentLevel.optionShape = ov.optionShape;
   }
   if (currentLevel.id === 6 && theme && QUIZ_OVERRIDES[theme]) currentLevel.questions = deepClone(QUIZ_OVERRIDES[theme]);
   attemptsFailed = 0;
@@ -255,9 +256,12 @@ function setFeedback(text, mode) {
 }
 
 // ---------------- QUIZ ----------------
+const OPT_LETTERS = ["А", "Б", "В", "Г", "Д", "Е"];
+const SHAPE_ICON = { shirt: "🎽", sticker: "💿", tag: "🏷️" };
 function renderQuiz(body) {
   levelState.answers = new Array(currentLevel.questions.length).fill(null);
   levelState.checked = false;
+  const shape = currentLevel.optionShape || null;
   const qWrap = document.createElement("div");
   qWrap.className = "quiz-list";
   currentLevel.questions.forEach((q, qi) => {
@@ -265,11 +269,16 @@ function renderQuiz(body) {
     qEl.className = "quiz-q";
     qEl.innerHTML = `<div class="q-text">${qi + 1}. ${applyTheme(q.q)}</div>`;
     const opts = document.createElement("div");
-    opts.className = "q-options";
+    opts.className = "q-options" + (shape ? " q-options-shaped" : "");
     q.options.forEach((opt, oi) => {
       const b = document.createElement("button");
-      b.className = "opt-btn";
-      b.textContent = opt;
+      if (shape) {
+        b.className = "opt-shape shape-" + shape;
+        b.innerHTML = `<span class="shape-icon">${SHAPE_ICON[shape] || "🏷️"}</span><span class="shape-code">${opt}</span>`;
+      } else {
+        b.className = "opt-btn";
+        b.innerHTML = `<span class="opt-badge">${OPT_LETTERS[oi] || oi + 1}</span><span class="opt-text">${opt}</span>`;
+      }
       b.addEventListener("click", () => {
         if (levelState.checked) return;
         levelState.answers[qi] = oi;
@@ -364,7 +373,7 @@ function renderBinaryTarget(body) {
   BIT_VALUES.forEach((val, i) => {
     const sw = document.createElement("button");
     sw.className = "switch-btn" + (levelState.bits[i] ? " on" : "");
-    sw.innerHTML = `<div class="sw-val">${val}</div><div class="sw-state">${levelState.bits[i]}</div>`;
+    sw.innerHTML = `<div class="sw-lock">${levelState.bits[i] ? "🔓" : "🔒"}</div><div class="sw-val">${val}</div>`;
     sw.addEventListener("click", () => {
       levelState.bits[i] = levelState.bits[i] ? 0 : 1;
       renderBinaryTarget(body);
